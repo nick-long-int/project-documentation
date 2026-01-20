@@ -39,10 +39,10 @@ public class Page {
     private Page parent;
 
 
-    @OneToMany(mappedBy = "page_id", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "page", cascade = CascadeType.ALL)
     private List<Comment> comments;
 
-    @OneToMany(mappedBy = "page_id", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "page", cascade = CascadeType.ALL)
     private List<Block> blocks;
 
     @ManyToMany(mappedBy = "pages")
