@@ -48,6 +48,7 @@ public class Page {
     @ManyToMany(mappedBy = "pages")
     private Set<User> users;
 
-
+    @ManyToMany(mappedBy = "pages")
+    private Set<Tag> tags;
 
 }
