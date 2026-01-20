@@ -1,37 +1,41 @@
 package ru.gnidenko.service;
 
 import lombok.RequiredArgsConstructor;
+import ru.gnidenko.model.Page;
 import ru.gnidenko.model.User;
 import ru.gnidenko.model.UserRole;
 import ru.gnidenko.repo.UserRepo;
 import ru.gnidenko.util.TransactionManager;
 
 import java.util.List;
+import java.util.Set;
 
-import static ru.gnidenko.service.UserChecker.*;
+import static ru.gnidenko.util.Checker.*;
 
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements Service<User> {
     private final TransactionManager manager;
-    private final UserRepo userRepo;
+    private final UserRepo repo;
 
-    public User createUser(User user) {
-        checkUserIsNotNull(user);
+    @Override
+    public User create(User user) {
+        checkIsNotNull(user, "user");
         checkUserFields(user);
 
         return manager.executeInTransaction(session -> {
-            //При создание юзера он может только читать
             user.setRole(UserRole.READ);
-            return userRepo.save(user, session);
+            return repo.save(user, session);
         });
     }
 
-    public User updateUser(Long id, User user) {
-        checkUserIsNotNull(user);
+    @Override
+    public User update(Long id, User user) {
+        checkIsNotNull(user, "user");
+        checkIsNotNull(id, "id");
 
         return manager.executeInTransaction(session -> {
 
-            User userToUpdate = userRepo.findById(id, session)
+            User userToUpdate = repo.findById(id, session)
                 .orElseThrow(()->new NullPointerException("User with id " + id + " not found")
             );
 
@@ -41,26 +45,39 @@ public class UserService {
             if (user.getPassword() != null && !user.getPassword().isBlank()) {
                 userToUpdate.setPassword(user.getPassword());
             }
+            if (user.getRole() != null) {
+                userToUpdate.setRole(user.getRole());
+            }
+            if (user.getPages() != null && !user.getPages().isEmpty()) {
+                Set<Page> pagesToUpdate = userToUpdate.getPages();
+                pagesToUpdate.addAll(user.getPages());
+                userToUpdate.setPages(pagesToUpdate);
+            }
 
             return userToUpdate;
 
         });
     }
 
-    public void deleteUser(Long id) {
+    @Override
+    public void delete(Long id) {
+        checkIsNotNull(id, "id");
         manager.executeInTransaction(session -> {
-            userRepo.delete(id, session);
+            repo.delete(id, session);
         });
     }
 
-    public User getUserById(Long id) {
+    @Override
+    public User getById(Long id) {
+        checkIsNotNull(id, "id");
         return manager.executeInTransaction(session -> {
-            return userRepo.findById(id, session)
+            return repo.findById(id, session)
                 .orElseThrow(()->new NullPointerException("User with id " + id + " not found"));
         });
     }
 
-    public List<User> getAllUsers() {
-        return manager.executeInTransaction(userRepo::findAll);
+    @Override
+    public List<User> getAll() {
+        return manager.executeInTransaction(repo::findAll);
     }
 }
