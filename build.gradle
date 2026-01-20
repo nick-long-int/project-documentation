@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+}
+
+group = 'ru.gnidenko'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Source: https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core
+    implementation("org.hibernate.orm:hibernate-core:7.2.0.Final")
+
+    // Source: https://mvnrepository.com/artifact/org.projectlombok/lombok
+    implementation("org.projectlombok:lombok:1.18.38")
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
