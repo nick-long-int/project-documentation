@@ -5,7 +5,10 @@ import ru.gnidenko.model.Block;
 import ru.gnidenko.model.Page;
 import ru.gnidenko.repo.BlockRepo;
 import ru.gnidenko.repo.PageRepo;
+import ru.gnidenko.repo.S3Repo;
 import ru.gnidenko.util.TransactionManager;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.util.List;
 
@@ -14,6 +17,7 @@ import static ru.gnidenko.util.Checker.*;
 @RequiredArgsConstructor
 public class BlockService implements Service<Block> {
     private final TransactionManager manager;
+    private final S3Repo s3Service;
     private final BlockRepo repo;
     private final PageRepo pageRepo;
 
@@ -64,6 +68,25 @@ public class BlockService implements Service<Block> {
         manager.executeInTransaction(session -> {
             repo.delete(id, session);
         });
+    }
+
+    public Block uploadImage(Block block, String path) {
+        checkIsNotNull(block, "block");
+        checkIsNotNull(path, "path");
+        checkIsNotNull(block.getId(), "block_id");
+        return manager.executeInTransaction(session -> {
+            Block blockWithImage = repo.findById(block.getId(), session)
+                .orElseThrow(()->new NullPointerException("block not found"));
+
+            String key = s3Service.upload(path);
+            blockWithImage.setKey(key);
+            return blockWithImage;
+        });
+    }
+
+    public ResponseInputStream<GetObjectResponse> downloadImage(Block block, String path) {
+        checkIsNotNull(block, "block");
+        return s3Service.download(block.getKey(), path);
     }
 
     @Override

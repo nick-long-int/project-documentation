@@ -25,6 +25,7 @@ public class Block {
 
     private String title;
     private String content;
+    private String key;
 
     @ManyToOne
     @JoinColumn(name = "page_id")
