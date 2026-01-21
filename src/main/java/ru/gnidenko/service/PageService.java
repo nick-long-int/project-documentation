@@ -52,8 +52,7 @@ public class PageService implements Service<Page> {
                 .collect(Collectors.toSet());
 
             page.setUsers(users);
-
-            return page;
+            return repo.save(page, session);
         });
     }
 

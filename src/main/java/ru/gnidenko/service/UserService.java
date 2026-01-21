@@ -4,17 +4,20 @@ import lombok.RequiredArgsConstructor;
 import ru.gnidenko.model.Page;
 import ru.gnidenko.model.User;
 import ru.gnidenko.model.UserRole;
+import ru.gnidenko.repo.PageRepo;
 import ru.gnidenko.repo.UserRepo;
 import ru.gnidenko.util.TransactionManager;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static ru.gnidenko.util.Checker.*;
 
 @RequiredArgsConstructor
 public class UserService implements Service<User> {
     private final TransactionManager manager;
+    private final PageRepo pageRepo;
     private final UserRepo repo;
 
     @Override
@@ -50,7 +53,12 @@ public class UserService implements Service<User> {
             }
             if (user.getPages() != null && !user.getPages().isEmpty()) {
                 Set<Page> pagesToUpdate = userToUpdate.getPages();
-                pagesToUpdate.addAll(user.getPages());
+                pagesToUpdate.addAll(user.getPages()
+                    .stream()
+                    .map(page -> pageRepo.findById(page.getId(),session)
+                        .orElseThrow(()->new NullPointerException("Page not found")))
+                    .collect(Collectors.toSet())
+                );
                 userToUpdate.setPages(pagesToUpdate);
             }
 
