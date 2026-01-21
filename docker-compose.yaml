@@ -12,6 +12,7 @@ services:
 
   minio:
     image: minio/minio
+    container_name: minio-pd
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -21,7 +22,10 @@ services:
       MINIO_ROOT_USER: user
       MINIO_ROOT_PASSWORD: password
     command:
-      - server --console-address :9001 /data
+      - server
+      - /data
+      - --console-address
+      - :9001
 
   createbuckets:
     image: minio/mc
