@@ -17,6 +17,15 @@ dependencies {
     implementation("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")
 
+    // Source: https://mvnrepository.com/artifact/redis.clients/jedis
+    implementation("redis.clients:jedis:7.2.1")
+    // Source: https://mvnrepository.com/artifact/co.elastic.clients/elasticsearch-java
+    implementation("co.elastic.clients:elasticsearch-java:9.2.3")
+
+    // Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
+
+
     // Source: https://mvnrepository.com/artifact/org.postgresql/postgresql
     implementation("org.postgresql:postgresql:42.7.7")
 
