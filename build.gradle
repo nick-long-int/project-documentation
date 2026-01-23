@@ -20,7 +20,7 @@ dependencies {
     // Source: https://mvnrepository.com/artifact/redis.clients/jedis
     implementation("redis.clients:jedis:7.2.1")
     // Source: https://mvnrepository.com/artifact/co.elastic.clients/elasticsearch-java
-    implementation("co.elastic.clients:elasticsearch-java:9.2.3")
+    implementation("co.elastic.clients:elasticsearch-java:8.17.2")
 
     // Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
     implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
