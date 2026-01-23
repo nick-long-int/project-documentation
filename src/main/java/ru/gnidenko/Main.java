@@ -8,7 +8,9 @@ import ru.gnidenko.model.Tag;
 import ru.gnidenko.model.User;
 import ru.gnidenko.repo.BlockRepo;
 import ru.gnidenko.repo.CommentRepo;
+import ru.gnidenko.repo.ElasticRepo;
 import ru.gnidenko.repo.PageRepo;
+import ru.gnidenko.repo.RedisRepo;
 import ru.gnidenko.repo.S3Repo;
 import ru.gnidenko.repo.TagRepo;
 import ru.gnidenko.repo.UserRepo;
@@ -34,8 +36,10 @@ public class Main {
         S3Repo s3Repo = new S3Repo("documents");
         TagRepo tagRepo = new TagRepo();
         UserRepo userRepo = new UserRepo();
+        ElasticRepo elasticRepo = new ElasticRepo();
+        RedisRepo redisRepo = new RedisRepo(20000);
 
-        PageService pageService = new PageService(pageRepo, userRepo, blockRepo, commentRepo, tagRepo, transactionManager);
+        PageService pageService = new PageService(pageRepo, userRepo, blockRepo, commentRepo, tagRepo, transactionManager, elasticRepo, redisRepo);
         CommentService commentService = new CommentService(transactionManager, userRepo, pageRepo, commentRepo);
         BlockService blockService = new BlockService(transactionManager, s3Repo, blockRepo, pageRepo);
         TagService tagService = new TagService(transactionManager, tagRepo, pageRepo);
@@ -85,28 +89,12 @@ public class Main {
         //6.Пользователь загружает картинку к первому блоку
         Block blockWithImage = blockService.uploadImage(returnedBlock1, "hi.jpg");
         System.out.println(blockWithImage.getKey());
-//
-//        S3Client client = S3Config.getClient();
-//        client.listBuckets()
-//                .buckets()
-//                    .forEach(System.out::println);
-//
-//        File file = new File("hi.jpg");
-//
-//
-//        client.putObject(request ->
-//                request
-//                    .bucket("documents")
-//                    .key(file.getName())
-//            , file.toPath()
-//        );
-//        S3Repo s3Service = new S3Repo("documents");
-//        s3Service.upload("documents", "hi.jpg");
 
+        //7. Получение заголовка страницы из кеша
+        System.out.println(pageService.getById(returnedPage.getId()).getTitle());
 
-//        try (InputStream inputStream = s3Service.download("0hi6653.jpg", "hi3.jpg")) {
-//            inputStream.transferTo(new FileOutputStream("hi3.jpg"));
-//        }
-
+        //8. Получение из elastic по заголовку
+        pageService.getByTitle("Add").forEach(p -> System.out.println(p.toString()));
+        elasticRepo.closeClient();
     }
 }
