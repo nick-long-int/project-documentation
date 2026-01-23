@@ -1,11 +1,15 @@
 package ru.gnidenko.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import ru.gnidenko.model.Page;
 import ru.gnidenko.model.User;
 import ru.gnidenko.repo.BlockRepo;
 import ru.gnidenko.repo.CommentRepo;
+import ru.gnidenko.repo.ElasticRepo;
 import ru.gnidenko.repo.PageRepo;
+import ru.gnidenko.repo.RedisRepo;
 import ru.gnidenko.repo.TagRepo;
 import ru.gnidenko.repo.UserRepo;
 import ru.gnidenko.util.TransactionManager;
@@ -26,6 +30,8 @@ public class PageService implements Service<Page> {
     private final CommentRepo commentRepo;
     private final TagRepo tagRepo;
     private final TransactionManager manager;
+    private final ElasticRepo elasticRepo;
+    private final RedisRepo redisRepo;
 
     @Override
     public Page create(Page page) {
@@ -52,7 +58,16 @@ public class PageService implements Service<Page> {
                 .collect(Collectors.toSet());
 
             page.setUsers(users);
-            return repo.save(page, session);
+            Page savedPage = repo.save(page,session);
+            try {
+                String json = new ObjectMapper().writeValueAsString(savedPage);
+                elasticRepo.addToIndex("pages", savedPage.getId().toString(), savedPage);
+                redisRepo.addCache(savedPage.getId().toString(), json);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
+            return savedPage;
         });
     }
 
@@ -113,6 +128,7 @@ public class PageService implements Service<Page> {
         checkIsNotNull(id, "id");
         manager.executeInTransaction(session -> {
            repo.delete(id, session);
+           redisRepo.removeCache(id.toString());
         });
     }
 
@@ -124,9 +140,21 @@ public class PageService implements Service<Page> {
     @Override
     public Page getById(Long id) {
         return manager.executeInTransaction(session -> {
-            return repo.findById(id, session)
-                .orElseThrow(() -> new NullPointerException("Page not found"));
+            try {
+                Page page = new ObjectMapper().readValue(redisRepo.getCache(id.toString()), Page.class);
+                if (page != null) {
+                    return page;
+                }
+                return repo.findById(id, session)
+                    .orElseThrow(() -> new NullPointerException("Page not found"));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
         });
+    }
+
+    public List<?> getByTitle(String title){
+        return elasticRepo.searchIntoIndex("pages", "title", title, new Page());
     }
 
     private String generateUrl(String title){
